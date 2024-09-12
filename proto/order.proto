@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package order;
+
+option go_package = "order-service/proto/order";
+
+// Order service definition
+service OrderService {
+    // Create an order with order lines
+    rpc CreateOrder (OrderRequest) returns (OrderResponse);
+
+    // Get order by ID
+    rpc GetOrder (OrderIDRequest) returns (OrderResponse);
+
+    // Get all orders
+    rpc GetAllOrders (Empty) returns (OrderListResponse);
+}
+
+// Order Line request
+message OrderLineRequest {
+    uint32 menu_id = 1;
+    uint32 quantity = 2;
+    float price = 3;
+}
+
+// Order request message
+message OrderRequest {
+    uint32 table_id = 1;
+    float total = 2;
+    uint32 created_by = 3;
+    repeated OrderLineRequest order_lines = 4;
+}
+
+// Response message for creating or getting an order
+message OrderResponse {
+    uint32 id = 1;
+    uint32 table_id = 2;
+    float total = 3;
+    repeated OrderLineResponse order_lines = 4;
+}
+
+// Order line response
+message OrderLineResponse {
+    uint32 menu_id = 1;
+    uint32 quantity = 2;
+    float price = 3;
+    float sub_total = 4;
+}
+
+// Request for getting an order by ID
+message OrderIDRequest {
+    uint32 order_id = 1;
+}
+
+// Response for getting all orders
+message OrderListResponse {
+    repeated OrderResponse orders = 1;
+}
+
+// Empty request
+message Empty {}

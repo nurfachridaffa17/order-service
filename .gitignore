@@ -1,0 +1,5 @@
+*.log
+
+.env.development
+.env.production
+.env.staging
