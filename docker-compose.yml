@@ -1,0 +1,9 @@
+version: "3"
+services:
+  web:
+    restart: always
+    image: registry.solu.co.id/repository/order-service
+    ports:
+      - '8111:8111'
+    tty: true
+    container_name: order-service
