@@ -32,7 +32,7 @@ WORKDIR /
 
 COPY --from=build /app /app
 
-COPY --from=build /order-service/.env /.env
+COPY --from=build /order-service/.env /.env.development
 
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
