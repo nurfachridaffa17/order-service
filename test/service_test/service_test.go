@@ -1,41 +1,118 @@
 package test
 
 import (
-	"context"
-	"log"
-	"order-service/proto/order-service/proto/order"
+	"order-service/internal/models/base"
+	"order-service/internal/models/dto"
+	"order-service/internal/models/entity"
+	"order-service/internal/service"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/grpc"
+	"github.com/stretchr/testify/mock"
 )
 
+// Mock repository
+type MockOrderRepository struct {
+	mock.Mock
+}
+
+func (m *MockOrderRepository) Create(order entity.TOrderModel) (entity.TOrderModel, error) {
+	args := m.Called(order)
+	return args.Get(0).(entity.TOrderModel), args.Error(1)
+}
+
+func (m *MockOrderRepository) FindByID(id uint) (entity.TOrderModel, error) {
+	args := m.Called(id)
+	return args.Get(0).(entity.TOrderModel), args.Error(1)
+}
+
+func (m *MockOrderRepository) FindAll() ([]entity.TOrderModel, error) {
+	args := m.Called()
+	return args.Get(0).([]entity.TOrderModel), args.Error(1)
+}
+
+func (m *MockOrderRepository) Update(id uint, order entity.TOrderModel) (entity.TOrderModel, error) {
+	args := m.Called(id, order)
+	return args.Get(0).(entity.TOrderModel), args.Error(1)
+}
+
+func (m *MockOrderRepository) Delete(id uint) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
+// Mock OrderLineRepository
+type MockOrderLineRepository struct {
+	mock.Mock
+}
+
+func (m *MockOrderLineRepository) Create(orderLine entity.TOrderLinesModel) (entity.TOrderLinesModel, error) {
+	args := m.Called(orderLine)
+	return args.Get(0).(entity.TOrderLinesModel), args.Error(1)
+}
+
+func (m *MockOrderLineRepository) FindByID(id uint) (entity.TOrderLinesModel, error) {
+	args := m.Called(id)
+	return args.Get(0).(entity.TOrderLinesModel), args.Error(1)
+}
+
+func (m *MockOrderLineRepository) FindAll() ([]entity.TOrderLinesModel, error) {
+	args := m.Called()
+	return args.Get(0).([]entity.TOrderLinesModel), args.Error(1)
+}
+
+func (m *MockOrderLineRepository) Update(id uint, orderLine entity.TOrderLinesModel) (entity.TOrderLinesModel, error) {
+	args := m.Called(id, orderLine)
+	return args.Get(0).(entity.TOrderLinesModel), args.Error(1)
+}
+
+func (m *MockOrderLineRepository) Delete(id uint) error {
+	args := m.Called(id)
+	return args.Error(0)
+}
+
 func TestCreateOrderWithLines(t *testing.T) {
-	conn, err := grpc.Dial("localhost:8111", grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("did not connect: %v", err)
-	}
-	defer conn.Close()
+	mockOrderRepo := new(MockOrderRepository)
+	mockOrderLineRepo := new(MockOrderLineRepository)
 
-	client := order.NewOrderServiceClient(conn)
+	orderService := service.NewOrderService(mockOrderRepo, mockOrderLineRepo)
 
-	req := &order.OrderRequest{
-		TableId:   1,
-		Total:     200.0,
-		CreatedBy: 1,
-		OrderLines: []*order.OrderLineRequest{
-			{MenuId: 1, Quantity: 20, Price: 10.0},
+	orderDTO := dto.OrderDTO{
+		TableID:   1,
+		Total:     100.0,
+		Createdby: 1,
+		OrderLines: []dto.OrderLineDTO{
+			{MenuID: 1, Quantity: 2, Price: 10.0},
 		},
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	res, err := client.CreateOrder(ctx, req)
-	if err != nil {
-		t.Fatalf("could not create order: %v", err)
+	createdOrder := entity.TOrderModel{
+		Entity: base.Entity{
+			Createdby: 1,
+		},
+		TOrderEntity: entity.TOrderEntity{
+			TableID: 1,
+			Total:   100.0,
+		},
 	}
 
-	assert.NotNil(t, res)
+	mockOrderRepo.On("Create", mock.Anything).Return(createdOrder, nil)
+	mockOrderLineRepo.On("Create", mock.Anything).Return(entity.TOrderLinesModel{}, nil)
+
+	order, err := orderService.CreateOrderWithLines(orderDTO)
+	assert.NoError(t, err)
+	assert.Equal(t, createdOrder.ID, order.ID)
 }
+
+// func TestGetOrderByID(t *testing.T) {
+// 	mockOrderRepo := new(MockOrderRepository)
+// 	orderService := service.NewOrderService(mockOrderRepo, nil)
+
+// 	expectedOrder := entity.TOrderModel{ID: 1}
+
+// 	mockOrderRepo.On("FindByID", uint(1)).Return(expectedOrder, nil)
+
+// 	order, err := orderService.GetOrderByID(1)
+// 	assert.NoError(t, err)
+// 	assert.Equal(t, expectedOrder.ID, order.ID)
+// }
