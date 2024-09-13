@@ -30,7 +30,7 @@ func (*env) Load() {
 	case "stage":
 		err = godotenv.Load(rootPath + "/.env.staging")
 	default:
-		err = godotenv.Load(rootPath + "/.env.development")
+		err = godotenv.Load(rootPath + "/.env")
 	}
 
 	if err != nil {
