@@ -104,15 +104,55 @@ func TestCreateOrderWithLines(t *testing.T) {
 	assert.Equal(t, createdOrder.ID, order.ID)
 }
 
-// func TestGetOrderByID(t *testing.T) {
-// 	mockOrderRepo := new(MockOrderRepository)
-// 	orderService := service.NewOrderService(mockOrderRepo, nil)
+func TestGetOrderByID(t *testing.T) {
+	mockOrderRepo := new(MockOrderRepository)
+	orderService := service.NewOrderService(mockOrderRepo, nil)
 
-// 	expectedOrder := entity.TOrderModel{ID: 1}
+	expectedOrder := entity.TOrderModel{
+		Entity: base.Entity{
+			Createdby: 1,
+		},
+		TOrderEntity: entity.TOrderEntity{
+			TableID: 1,
+			Total:   100.0,
+		},
+	}
 
-// 	mockOrderRepo.On("FindByID", uint(1)).Return(expectedOrder, nil)
+	mockOrderRepo.On("FindByID", uint(1)).Return(expectedOrder, nil)
 
-// 	order, err := orderService.GetOrderByID(1)
-// 	assert.NoError(t, err)
-// 	assert.Equal(t, expectedOrder.ID, order.ID)
-// }
+	order, err := orderService.GetOrderByID(1)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedOrder.ID, order.ID)
+}
+
+func TestGetAllOrders(t *testing.T) {
+	mockOrderRepo := new(MockOrderRepository)
+	orderService := service.NewOrderService(mockOrderRepo, nil)
+
+	expectedOrders := []entity.TOrderModel{
+		entity.TOrderModel{
+			Entity: base.Entity{
+				Createdby: 1,
+			},
+			TOrderEntity: entity.TOrderEntity{
+				TableID: 1,
+				Total:   100.0,
+			},
+		},
+		entity.TOrderModel{
+			Entity: base.Entity{
+				Createdby: 1,
+			},
+			TOrderEntity: entity.TOrderEntity{
+				TableID: 2,
+				Total:   200.0,
+			},
+		},
+	}
+
+	mockOrderRepo.On("FindAll").Return(expectedOrders, nil)
+
+	orders, err := orderService.GetAllOrders()
+	assert.NoError(t, err)
+	assert.Equal(t, expectedOrders, orders)
+}

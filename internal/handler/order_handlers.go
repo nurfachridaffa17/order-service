@@ -65,33 +65,33 @@ func (h *OrderHandler) CreateOrder(ctx context.Context, req *order_service.Order
 }
 
 // Implement the GetOrder method
-// func (h *OrderHandler) GetOrder(ctx context.Context, req *order_service.GetOrderRequest) (*order_service.OrderResponse, error) {
-// 	order, err := h.orderService.GetOrderByID(uint(req.OrderId))
-// 	if err != nil {
-// 		logging.Log.Error("Error finding order:", err)
-// 		return nil, err
-// 	}
+func (h *OrderHandler) GetOrder(ctx context.Context, req *order_service.OrderIDRequest) (*order_service.OrderResponse, error) {
+	order, err := h.orderService.GetOrderByID(uint(req.OrderId))
+	if err != nil {
+		logging.Log.Error("Error finding order:", err)
+		return nil, err
+	}
 
-// 	// Convert the result back to gRPC response
-// 	orderResponse := &order_service.OrderResponse{
-// 		Id:         uint32(order.ID),
-// 		TableId:    order.TableID,
-// 		Total:      float32(order.Total),
-// 		OrderLines: []*order_service.OrderLineResponse{},
-// 	}
+	// Convert the result back to gRPC response
+	orderResponse := &order_service.OrderResponse{
+		Id:         uint32(order.ID),
+		TableId:    order.TableID,
+		Total:      float32(order.Total),
+		OrderLines: []*order_service.OrderLineResponse{},
+	}
 
-// 	for _, line := range order.OrderLines {
-// 		orderLineResponse := &order_service.OrderLineResponse{
-// 			MenuId:   uint32(line.MenuID),
-// 			Quantity: uint32(line.Quantity),
-// 			Price:    float32(line.Price),
-// 			SubTotal: float32(line.SubTotal),
-// 		}
-// 		orderResponse.OrderLines = append(orderResponse.OrderLines, orderLineResponse)
-// 	}
+	for _, line := range order.OrderLines {
+		orderLineResponse := &order_service.OrderLineResponse{
+			MenuId:   uint32(line.MenuID),
+			Quantity: uint32(line.Quantity),
+			Price:    float32(line.Price),
+			SubTotal: float32(line.SubTotal),
+		}
+		orderResponse.OrderLines = append(orderResponse.OrderLines, orderLineResponse)
+	}
 
-// 	return orderResponse, nil
-// }
+	return orderResponse, nil
+}
 
 // Implement the GetAllOrders method
 func (h *OrderHandler) GetAllOrders(ctx context.Context, req *order_service.Empty) (*order_service.OrderListResponse, error) {
