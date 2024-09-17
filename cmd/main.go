@@ -1,19 +1,17 @@
 package main
 
 import (
-	"net"
 	"order-service/config"
-	"order-service/internal/handler"
 	"order-service/internal/pkg/db"
 	"order-service/internal/pkg/logging"
 	"order-service/internal/pkg/migration"
-	"order-service/internal/repository"
-	"order-service/internal/service"
-	order_service "order-service/proto/order-service/proto/order"
 	"os"
 
-	"google.golang.org/grpc"
-	"gorm.io/gorm"
+	"os/signal"
+	"syscall"
+
+	grpc_server "order-service/internal/api/grpc-server"
+	"order-service/internal/api/http"
 )
 
 func main() {
@@ -26,44 +24,14 @@ func main() {
 
 	migration.Init()
 
-	err := runGRPCServer(db.DBManager())
-	if err != nil {
-		logging.Log.Fatalf("Failed to start gRPC server: %v", err)
-		os.Exit(1)
-	}
+	// Initialize GRPC
+	go grpc_server.RunServer(db.DBManager())
+	go http.Init(db.DBManager())
 
-}
+	// Graceful Shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	logging.Log.Info("Shutdown Server ...")
 
-// runGRPCServer starts the gRPC server
-func runGRPCServer(db *gorm.DB) error {
-	// Initialize repositories
-	orderRepo := repository.NewOrderRepository(db)
-	orderLineRepo := repository.NewOrderLineRepository(db)
-
-	// Initialize services
-	orderService := service.NewOrderService(orderRepo, orderLineRepo)
-
-	// Initialize gRPC handler
-	orderHandler := handler.NewOrderHandler(orderService)
-
-	// Setup gRPC server
-	grpcServer := grpc.NewServer()
-
-	// Register the OrderService server with the handler
-	order_service.RegisterOrderServiceServer(grpcServer, orderHandler)
-
-	// Setup listener on the gRPC port
-	lis, err := net.Listen("tcp", os.Getenv("GRPC_PORT"))
-	if err != nil {
-		return err
-	}
-
-	logging.Log.Printf("gRPC server listening on %s", os.Getenv("GRPC_PORT"))
-
-	// Start the gRPC server
-	if err := grpcServer.Serve(lis); err != nil {
-		return err
-	}
-
-	return nil
 }
